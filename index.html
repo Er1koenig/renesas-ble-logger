@@ -148,6 +148,11 @@
 
 	#tableCard { display: none !important; }
   	.mobile-tabs { display: none !important; }
+
+	/* 新增：移动端隐藏 R1、R2 两个图表卡片 */
+  	#chartsPanel .chart-card:has(#r1Chart),
+  	#chartsPanel .chart-card:has(#r2Chart) {
+    	display: none !important;
     }
   </style>
 </head>
