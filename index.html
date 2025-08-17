@@ -2,7 +2,7 @@
 <html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Renesas BLE 100 ms Logger (Calibrated)</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232563eb'/%3E%3Ctext x='16' y='21' font-size='18' font-family='Inter,Arial,sans-serif' fill='white' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,14 +62,14 @@
     html,body{height:100%;margin:0}
     body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;transition: background .25s ease,color .25s ease;}
 
-    /* Layout */
-    #app{max-width:1400px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:20px}
+    /* 全局布局：让内容在移动端占满视口高度 */
+    #app{max-width:1400px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:20px;min-height:100dvh;min-height:100svh}
 
     .app-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .title{font-size:20px;font-weight:600;letter-spacing:.2px;margin:0}
     .subtitle{color:var(--muted);font-size:13px;margin:0}
 
-    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);max-hieght:80vh!important;}
 
     .toolbar{display:grid;grid-template-columns:1fr;gap:12px;padding:16px}
     .toolbar .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
@@ -85,6 +85,9 @@
     .icon-btn{appearance:none;border:1px solid var(--border);background:transparent;color:inherit;border-radius:10px;padding:8px 12px;font-size:16px;line-height:1;cursor:pointer;transition:background .2s,border-color .2s;display:inline-flex;align-items:center;gap:8px}
     .icon-btn:hover{background:var(--accent-weak);}
 
+    /* 浮动按钮（移动端一键显示/隐藏控制区） */
+    .fab{position:fixed;right:12px;bottom:12px;z-index:60;border:none;border-radius:9999px;padding:14px 16px;background:var(--accent);color:#fff;box-shadow:var(--shadow);cursor:pointer;display:none}
+
     /* Fields */
     .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
     .field label{font-size:12px;font-weight:600;color:var(--muted)}
@@ -93,23 +96,17 @@
     .hint{font-size:12px;color:var(--muted)}
 
     /* Content area */
-    #content{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    #content{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;flex:1;min-height:0;}
     @media (max-width:1100px){#content{grid-template-columns:1fr}}
 
     /* Mobile tabs (only show on small screens) */
     .mobile-tabs{display:none;gap:8px}
     .mobile-tabs .tab{flex:1;}
-    @media (max-width:640px){
-      .mobile-tabs{display:flex}
-      .is-hidden-mobile{display:none !important}
-      .btn,.icon-btn{padding:12px 16px;font-size:16px}
-      .toolbar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom-left-radius:0;border-bottom-right-radius:0}
-    }
 
     /* Table card */
-    .table-card{overflow:hidden}
+    .table-card{overflow:hidden;display:flex;flex-direction:column;min-height:0}
     .table-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-    .table-wrap{max-height:70vh;overflow:auto}
+    .table-wrap{max-height:70vh!important;overflow:auto;}
     table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
     thead th{position:sticky;top:0;background:var(--card);z-index:2;text-align:left;padding:10px;border-bottom:1px solid var(--border);font-weight:600}
     tbody td{padding:10px;border-bottom:1px solid var(--border)}
@@ -122,14 +119,32 @@
     /* Charts grid */
     .charts{display:grid;grid-template-columns:1fr;gap:16px}
     @media (min-width:640px){.charts{grid-template-columns:1fr 1fr}}
-    .chart-card{display:flex;flex-direction:column;gap:8px;padding:12px}
+    .chart-card{display:flex;flex-direction:column;gap:8px;padding:12px;min-height:260px}
     .chart-title{font-size:13px;color:var(--muted);font-weight:600;padding:0 4px}
-    .chart-canvas{height:260px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
-    .chart-canvas canvas{width:100%!important;height:100%!important;display:block}
+    .chart-canvas{height:260px!important;border:1px solid var(--border);border-radius:10px;overflow:hidden;flex:1}
+    .chart-canvas canvas{width:100%!important;height:280px!important;display:block}
 
     /* Respect reduced motion */
     @media (prefers-reduced-motion: reduce){
       *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+    }
+
+    /* —— 移动端强化：把大部分屏幕让给表格/图表 —— */
+    @media (max-width:640px){
+      #app{padding:10px}
+      .btn,.icon-btn{padding:12px 16px;font-size:16px}
+      /* 采用纵向铺满布局 */
+      #content{display:flex;flex-direction:column;flex:1;min-height:0}
+      .mobile-tabs{display:flex;position:sticky;top:0;z-index:5;background:var(--bg);padding-bottom:8px}
+      .toolbar{position:static;padding:10px}
+      /* 让卡片自己撑满 */
+      .table-card,#chartsPanel{flex:1;min-height:0}
+      .table-wrap{flex:1;max-height:none;min-height:0}
+      .charts{flex:1;overflow:auto;-webkit-overflow-scrolling:touch}
+      .chart-canvas{height:min(55vh,420px)}
+      /* 沉浸模式：隐藏头部与控制区 */
+      body.immersive .app-header, body.immersive .toolbar{display:none!important}
+      .fab{display:inline-flex}
     }
   </style>
 </head>
@@ -215,16 +230,20 @@
           <div class="chart-canvas"><canvas id="r2Chart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">Temperature (°C)</div>
-          <div class="chart-canvas"><canvas id="tempChart"></canvas></div>
-        </div>
-        <div class="chart-card">
           <div class="chart-title">pH</div>
           <div class="chart-canvas"><canvas id="phChart"></canvas></div>
         </div>
+	<div class="chart-card">
+          <div class="chart-title">Temperature (°C)</div>
+          <div class="chart-canvas"><canvas id="tempChart"></canvas></div>
+        </div>
+
       </div>
     </section>
   </div>
+
+  <!-- 移动端浮动按钮：显示/隐藏控制区（沉浸式查看表格/图表） -->
+  <button id="toggleControls" class="fab" aria-label="Toggle controls">⚙️</button>
 
 <script>
 /***** ---------- 主题切换 & 移动端标签 ---------- *****/
@@ -274,6 +293,9 @@
     if(window.matchMedia('(max-width:640px)').matches){
       (isCharts? table: charts).classList.add('is-hidden-mobile');
       (isCharts? charts: table).classList.remove('is-hidden-mobile');
+      // 进入图表页后，主动触发尺寸更新，避免隐藏->显示后尺寸计算不准
+      if(isCharts){ [chartR1,chartR2,chartTemp,chartPH].forEach(ch=>ch&&ch.resize()); }
+      window.scrollTo({top:0,behavior:'instant'});
     }else{
       table.classList.remove('is-hidden-mobile');
       charts.classList.remove('is-hidden-mobile');
@@ -320,17 +342,18 @@ const inT25=document.getElementById('t25');
 const inT50=document.getElementById('t50');
 const inPH1=document.getElementById('ph1');
 const inPH8=document.getElementById('ph8');
+const fab=document.getElementById('toggleControls');
 
 /***** ---------- Input Validation ---------- *****/
 function validateInputs(){
-  // All inputs must be numeric and not empty
+  // 所有输入需为数字
   const filled=[inT25,inT50,inPH1,inPH8].every(el=>isFinite(parseFloat(el.value)));
   btn.disabled=!filled;
 }
 [inT25,inT50,inPH1,inPH8].forEach(el=>el.addEventListener('input',validateInputs));
 validateInputs();
 
-/***** ---------- Calibration Helpers ---------- *****/
+/***** ---------- 校准换算 ---------- *****/
 function getCal(){
   const RT25=parseFloat(inT25.value);
   const RT50=parseFloat(inT50.value);
@@ -451,10 +474,22 @@ btn.onclick=async()=>{
     updateChartColors(); // 创建后立即按当前主题同步配色
     readLoop();
     btn.disabled = true; // keep disabled once logging starts
+
+    // 移动端自动进入沉浸模式：把空间让给表格/图表
+    if(window.matchMedia('(max-width:640px)').matches){
+      document.body.classList.add('immersive');
+    }
   }catch(e){
     alert('BLE connection error: '+e);
   }
 };
+
+// 浮动按钮：切换沉浸模式，便于随时找回控制区
+fab.addEventListener('click',()=>{
+  document.body.classList.toggle('immersive');
+  // 切换可见性后触发图表尺寸更新
+  setTimeout(()=>[chartR1,chartR2,chartTemp,chartPH].forEach(ch=>ch&&ch.resize()),50);
+});
 
 async function readLoop(){
   try{
