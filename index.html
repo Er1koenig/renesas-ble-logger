@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN" data-theme="light">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4"></script>
   <style>
+    :root{color-scheme: light dark;}
     :root{
       --bg:#f7f8fa;
       --fg:#111827; /* slate-900 */
@@ -24,9 +25,26 @@
       --series2:#ef4444; /* R2 */
       --series3:#10b981; /* Temp */
       --series4:#8b5cf6; /* pH */
+      --grid: rgba(0,0,0,.06);
+      --hover-row: rgba(0,0,0,.03);
     }
+    /* 手动切换为深色时（覆盖系统偏好） */
+    [data-theme="dark"]{
+      --bg:#0b1220;
+      --fg:#e5e7eb;
+      --muted:#9ca3af;
+      --card:#0f172a;
+      --accent:#60a5fa;
+      --accent-weak:rgba(96,165,250,.12);
+      --border:#1f2937;
+      --shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 35px rgba(0,0,0,.6);
+      --series1:#60a5fa; --series2:#f87171; --series3:#34d399; --series4:#a78bfa;
+      --grid: rgba(255,255,255,.08);
+      --hover-row: rgba(255,255,255,.03);
+    }
+    /* 若未手动选择，则默认跟随系统 */
     @media (prefers-color-scheme: dark){
-      :root{
+      :root:not([data-theme="light"]){
         --bg:#0b1220;
         --fg:#e5e7eb;
         --muted:#9ca3af;
@@ -36,10 +54,13 @@
         --border:#1f2937;
         --shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 35px rgba(0,0,0,.6);
         --series1:#60a5fa; --series2:#f87171; --series3:#34d399; --series4:#a78bfa;
+        --grid: rgba(255,255,255,.08);
+        --hover-row: rgba(255,255,255,.03);
       }
     }
+
     html,body{height:100%;margin:0}
-    body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;}
+    body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;transition: background .25s ease,color .25s ease;}
 
     /* Layout */
     #app{max-width:1400px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:20px}
@@ -60,6 +81,10 @@
     .btn.secondary:hover{background:var(--accent-weak)}
     .btn:disabled{opacity:.55;cursor:not-allowed}
 
+    /* Icon button for theme toggle */
+    .icon-btn{appearance:none;border:1px solid var(--border);background:transparent;color:inherit;border-radius:10px;padding:8px 12px;font-size:16px;line-height:1;cursor:pointer;transition:background .2s,border-color .2s;display:inline-flex;align-items:center;gap:8px}
+    .icon-btn:hover{background:var(--accent-weak);}
+
     /* Fields */
     .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
     .field label{font-size:12px;font-weight:600;color:var(--muted)}
@@ -71,6 +96,16 @@
     #content{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
     @media (max-width:1100px){#content{grid-template-columns:1fr}}
 
+    /* Mobile tabs (only show on small screens) */
+    .mobile-tabs{display:none;gap:8px}
+    .mobile-tabs .tab{flex:1;}
+    @media (max-width:640px){
+      .mobile-tabs{display:flex}
+      .is-hidden-mobile{display:none !important}
+      .btn,.icon-btn{padding:12px 16px;font-size:16px}
+      .toolbar{position:sticky;top:0;z-index:5;background:var(--card);border-bottom-left-radius:0;border-bottom-right-radius:0}
+    }
+
     /* Table card */
     .table-card{overflow:hidden}
     .table-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
@@ -78,8 +113,7 @@
     table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
     thead th{position:sticky;top:0;background:var(--card);z-index:2;text-align:left;padding:10px;border-bottom:1px solid var(--border);font-weight:600}
     tbody td{padding:10px;border-bottom:1px solid var(--border)}
-    tbody tr:hover{background:rgba(0,0,0,.03)}
-    @media (prefers-color-scheme: dark){tbody tr:hover{background:rgba(255,255,255,.03)}}
+    tbody tr:hover{background:var(--hover-row)}
     td.num{font-variant-numeric:tabular-nums;text-align:right}
     td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;letter-spacing:.2px}
     /* sticky first column */
@@ -105,6 +139,9 @@
       <div>
         <h1 class="title">Renesas BLE 100 ms Logger</h1>
         <p class="subtitle">exportable · calibration‑ready</p>
+      </div>
+      <div>
+        <button id="themeToggle" class="icon-btn" aria-label="switch to dark mode" aria-pressed="false" title="switch to light/dark mode">🌙 <span class="label">Dark</span></button>
       </div>
     </header>
 
@@ -136,8 +173,14 @@
     </section>
 
     <section id="content">
+      <!-- Mobile tabs -->
+      <nav class="mobile-tabs" role="tablist" aria-label="视图切换">
+        <button class="btn secondary tab" data-target="#tableCard" role="tab" aria-selected="true">表格</button>
+        <button class="btn secondary tab" data-target="#chartsPanel" role="tab" aria-selected="false">图表</button>
+      </nav>
+
       <!-- Table -->
-      <div class="panel table-card">
+      <div class="panel table-card" id="tableCard">
         <div class="table-head">
           <div class="subtitle" style="margin:0">Live Data</div>
         </div>
@@ -162,7 +205,7 @@
       </div>
 
       <!-- Charts -->
-      <div class="panel charts">
+      <div class="panel charts" id="chartsPanel">
         <div class="chart-card">
           <div class="chart-title">R1 (kΩ)</div>
           <div class="chart-canvas"><canvas id="r1Chart"></canvas></div>
@@ -184,6 +227,74 @@
   </div>
 
 <script>
+/***** ---------- 主题切换 & 移动端标签 ---------- *****/
+(function(){
+  const KEY='theme';
+  const root=document.documentElement;
+  const btn=document.getElementById('themeToggle');
+  const label=btn.querySelector('.label');
+  const mql=window.matchMedia('(prefers-color-scheme: dark)');
+
+  const saved=localStorage.getItem(KEY);
+  const userSet = saved === 'light' || saved === 'dark';
+  const init = saved || (mql.matches ? 'dark' : 'light');
+  applyTheme(init, false);
+
+  if(!userSet){
+    mql.addEventListener('change', e=> applyTheme(e.matches? 'dark':'light', false));
+  }
+
+  btn.addEventListener('click', ()=>{
+    const next = (getTheme()==='dark')? 'light':'dark';
+    applyTheme(next, true);
+  });
+
+  function getTheme(){ return root.getAttribute('data-theme') || 'light'; }
+
+  function applyTheme(theme, persist){
+    root.setAttribute('data-theme', theme);
+    const isDark = theme==='dark';
+    btn.setAttribute('aria-pressed', String(isDark));
+    btn.setAttribute('aria-label', isDark? 'switch to light mode':'switch to dark mode');
+    btn.title = 'switch to light/dark mode';
+    btn.firstChild.nodeValue = isDark? '☀️ ':'🌙 ';
+    label.textContent = isDark? 'Light':'Dark';
+    if(persist){ localStorage.setItem(KEY, theme); }
+    updateChartColors();
+  }
+
+  // 移动端“表格/图表”标签切换
+  const tabs = document.querySelectorAll('.mobile-tabs .tab');
+  const table = document.getElementById('tableCard');
+  const charts = document.getElementById('chartsPanel');
+
+  function setActive(targetSel){
+    const isCharts = targetSel === '#chartsPanel';
+    tabs.forEach(t=> t.setAttribute('aria-selected', String(t.dataset.target===targetSel)) );
+    if(window.matchMedia('(max-width:640px)').matches){
+      (isCharts? table: charts).classList.add('is-hidden-mobile');
+      (isCharts? charts: table).classList.remove('is-hidden-mobile');
+    }else{
+      table.classList.remove('is-hidden-mobile');
+      charts.classList.remove('is-hidden-mobile');
+    }
+  }
+
+  tabs.forEach(t=> t.addEventListener('click', ()=> setActive(t.dataset.target)) );
+
+  function handleResize(){
+    if(window.matchMedia('(max-width:640px)').matches){
+      // 默认展示表格
+      setActive('#tableCard');
+    }else{
+      table.classList.remove('is-hidden-mobile');
+      charts.classList.remove('is-hidden-mobile');
+    }
+  }
+  handleResize();
+  window.addEventListener('resize', handleResize);
+})();
+
 /***** ---------- Config ---------- *****/
 const SERVICE_UUID='00001800-0000-1000-8000-00805f9b34fb';
 const CHAR_UUID   ='00002a00-0000-1000-8000-00805f9b34fb';
@@ -258,6 +369,7 @@ function initCharts(){
   const c2=styles.getPropertyValue('--series2').trim()||'#ef4444';
   const c3=styles.getPropertyValue('--series3').trim()||'#10b981';
   const c4=styles.getPropertyValue('--series4').trim()||'#8b5cf6';
+  const grid=styles.getPropertyValue('--grid').trim()||'rgba(0,0,0,.06)';
 
   const common={
     type:'line',
@@ -266,7 +378,7 @@ function initCharts(){
       plugins:{legend:{display:false}},
       scales:{
         x:{title:{display:true,text:'t (s)'},grid:{display:false},ticks:{maxTicksLimit:10}},
-        y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.06)'}}
+        y:{beginAtZero:false,grid:{color:grid}}
       }
     }
   };
@@ -274,22 +386,42 @@ function initCharts(){
   chartR1=new Chart(document.getElementById('r1Chart'),{
     ...common,
     data:{labels:[],datasets:[{data:[],borderColor:c1,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:500}}}
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:500,grid:{color:grid}}}}
   });
   chartR2=new Chart(document.getElementById('r2Chart'),{
     ...common,
     data:{labels:[],datasets:[{data:[],borderColor:c2,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:100}}}
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:100,grid:{color:grid}}}}
   });
   chartTemp=new Chart(document.getElementById('tempChart'),{
     ...common,
     data:{labels:[],datasets:[{data:[],borderColor:c3,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:10,max:60}}}
+    options:{...common.options,scales:{...common.options.scales,y:{min:10,max:60,grid:{color:grid}}}}
   });
   chartPH=new Chart(document.getElementById('phChart'),{
     ...common,
     data:{labels:[],datasets:[{data:[],borderColor:c4,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:14}}}
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:14,grid:{color:grid}}}}
+  });
+}
+
+function updateChartColors(){
+  if(!(window.chartR1||window.chartR2||window.chartTemp||window.chartPH)) return;
+  const styles=getComputedStyle(document.documentElement);
+  const grid=styles.getPropertyValue('--grid').trim();
+  const c1=styles.getPropertyValue('--series1').trim();
+  const c2=styles.getPropertyValue('--series2').trim();
+  const c3=styles.getPropertyValue('--series3').trim();
+  const c4=styles.getPropertyValue('--series4').trim();
+  const charts=[chartR1,chartR2,chartTemp,chartPH];
+  const colors=[c1,c2,c3,c4];
+  charts.forEach((ch,i)=>{
+    if(!ch) return;
+    ch.data.datasets[0].borderColor = colors[i];
+    if(ch.options && ch.options.scales && ch.options.scales.y){
+      ch.options.scales.y.grid.color = grid;
+    }
+    ch.update('none');
   });
 }
 
@@ -316,6 +448,7 @@ btn.onclick=async()=>{
     startMs=performance.now();
     nextT=startMs+PERIOD_MS;
     initCharts();
+    updateChartColors(); // 创建后立即按当前主题同步配色
     readLoop();
     btn.disabled = true; // keep disabled once logging starts
   }catch(e){
@@ -389,4 +522,3 @@ function updateDownloadLink(){
 </script>
 </body>
 </html>
-
