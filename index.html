@@ -1,91 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Renesas BLE 100 ms Logger (Calibrated)</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231e88e5'/%3E%3Ctext x='16' y='21' font-size='18' font-family='Inter,Arial,sans-serif' fill='white' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E"/>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4"></script>
-<style>
-  :root{
-    --fg:#222;
-    --bg:#f8f9fb;
-    --accent:#1e88e5;
-    --border:#e0e3e7;
-    --table-even:#f1f5fa;
-  }
-  html,body{margin:0;padding:0;height:100%;font-family:'Inter',Arial,sans-serif;background:var(--bg);color:var(--fg);}  
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Renesas BLE 100 ms Logger (Calibrated)</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%232563eb'/%3E%3Ctext x='16' y='21' font-size='18' font-family='Inter,Arial,sans-serif' fill='white' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4"></script>
+  <style>
+    :root{
+      --bg:#f7f8fa;
+      --fg:#111827; /* slate-900 */
+      --muted:#6b7280; /* gray-500 */
+      --card:#ffffff;
+      --accent:#2563eb; /* refined blue */
+      --accent-weak:#e8eefc;
+      --border:#e5e7eb; /* gray-200 */
+      --shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06);
+      --radius:12px;
+      --series1:#2563eb; /* R1 */
+      --series2:#ef4444; /* R2 */
+      --series3:#10b981; /* Temp */
+      --series4:#8b5cf6; /* pH */
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220;
+        --fg:#e5e7eb;
+        --muted:#9ca3af;
+        --card:#0f172a;
+        --accent:#60a5fa;
+        --accent-weak:rgba(96,165,250,.12);
+        --border:#1f2937;
+        --shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 35px rgba(0,0,0,.6);
+        --series1:#60a5fa; --series2:#f87171; --series3:#34d399; --series4:#a78bfa;
+      }
+    }
+    html,body{height:100%;margin:0}
+    body{font-family:'Inter',system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;}
 
-  /* --- layout --- */
-  #app{max-width:1750px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:24px;}
-  .toolbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-  .toolbar .field{display:flex;flex-direction:column;font-size:12px;line-height:1.1;}
-  .toolbar .field label{margin-bottom:2px;font-weight:600;white-space:nowrap;}
-  .toolbar .field input{width:96px;padding:4px 6px;font-size:13px;border:1px solid var(--border);border-radius:4px;}
+    /* Layout */
+    #app{max-width:1400px;margin:0 auto;padding:24px;display:flex;flex-direction:column;gap:20px}
 
-  /* --- button/link --- */
-  button, a.btn{cursor:pointer;font-size:14px;font-weight:600;padding:8px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;text-decoration:none;transition:background .2s,opacity .2s;}
-  button:disabled{opacity:0.5;cursor:not-allowed;}
-  a.btn.secondary{background:transparent;color:var(--accent);}  
-  a.btn.secondary:hover{background:rgba(30,136,229,.1);}  
-  button:hover:not(:disabled){background:#1565c0;}
+    .app-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .title{font-size:20px;font-weight:600;letter-spacing:.2px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px;margin:0}
 
-  /* --- flex region for table+charts --- */
-  #wrap{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;}
-  /* table container so header can stick */
-  .table-wrap{max-height:717px;overflow-y:auto;box-shadow:0 2px 6px rgba(0,0,0,.08);border-radius:8px;background:#fff;}
+    .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
 
-  table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px;}
-  thead th{position:sticky;top:0;background:var(--accent);color:#fff;padding:6px 8px;border-bottom:1px solid var(--border);}  
-  tbody td{padding:6px 8px;border-bottom:1px solid var(--border);}  
-  tbody tr:nth-child(even){background:var(--table-even);}  
-  tbody td.num{text-align:right;font-variant-numeric:tabular-nums;}
+    .toolbar{display:grid;grid-template-columns:1fr;gap:12px;padding:16px}
+    .toolbar .row{display:flex;flex-wrap:wrap;gap:12px;align-items:end}
 
-  /* --- charts --- */
-  #charts{display:grid;grid-template-columns:1fr;grid-auto-rows:350px;gap:18px;flex:1;min-width:360px;}
-  #charts canvas{width:530px!important;height:500px!important;background:#fff;border:1px solid var(--border);border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.05);}  
-  @media (min-width:768px){
-    #charts{grid-template-columns:1fr 1fr;grid-auto-rows:300px;}
-    #charts canvas{height:300px!important;}
-  }
-</style>
+    /* Buttons */
+    .btn{appearance:none;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:10px;padding:10px 14px;font-weight:600;font-size:14px;cursor:pointer;transition:transform .06s ease,opacity .2s ease,background .2s}
+    .btn:active{transform:translateY(1px)}
+    .btn.secondary{background:transparent;color:var(--accent)}
+    .btn.secondary:hover{background:var(--accent-weak)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    /* Fields */
+    .field{display:flex;flex-direction:column;gap:6px;min-width:160px}
+    .field label{font-size:12px;font-weight:600;color:var(--muted)}
+    .input{height:38px;padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:transparent;color:inherit;font-size:14px;outline:none;transition:border-color .15s}
+    .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+    .hint{font-size:12px;color:var(--muted)}
+
+    /* Content area */
+    #content{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    @media (max-width:1100px){#content{grid-template-columns:1fr}}
+
+    /* Table card */
+    .table-card{overflow:hidden}
+    .table-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+    .table-wrap{max-height:70vh;overflow:auto}
+    table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}
+    thead th{position:sticky;top:0;background:var(--card);z-index:2;text-align:left;padding:10px;border-bottom:1px solid var(--border);font-weight:600}
+    tbody td{padding:10px;border-bottom:1px solid var(--border)}
+    tbody tr:hover{background:rgba(0,0,0,.03)}
+    @media (prefers-color-scheme: dark){tbody tr:hover{background:rgba(255,255,255,.03)}}
+    td.num{font-variant-numeric:tabular-nums;text-align:right}
+    td.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;letter-spacing:.2px}
+    /* sticky first column */
+    th.sticky, td.sticky{position:sticky;left:0;background:var(--card);z-index:1}
+
+    /* Charts grid */
+    .charts{display:grid;grid-template-columns:1fr;gap:16px}
+    @media (min-width:640px){.charts{grid-template-columns:1fr 1fr}}
+    .chart-card{display:flex;flex-direction:column;gap:8px;padding:12px}
+    .chart-title{font-size:13px;color:var(--muted);font-weight:600;padding:0 4px}
+    .chart-canvas{height:260px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+    .chart-canvas canvas{width:100%!important;height:100%!important;display:block}
+
+    /* Respect reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+    }
+  </style>
 </head>
 <body>
-<div id="app">
-  <h2 style="margin:0 0 8px 0">Renesas BLE 100 ms Logger</h2>
-  <div class="toolbar">
-    <button id="btn">Connect &amp; Start Logging</button>
-    <a id="dl" class="btn secondary" style="display:none;">Download CSV</a>
+  <div id="app">
+    <header class="app-header">
+      <div>
+        <h1 class="title">Renesas BLE 100 ms Logger</h1>
+        <p class="subtitle">Clean, readable, exportable · calibration‑ready</p>
+      </div>
+    </header>
 
-    <!-- --- Calibration Inputs --- -->
-    <div class="field"><label for="t25">R<sub>T</sub>@25 °C (Ω)</label><input id="t25" type="number" step="any" placeholder="e.g. 30"></div>
-    <div class="field"><label for="t50">R<sub>T</sub>@50 °C (Ω)</label><input id="t50" type="number" step="any" placeholder="e.g. 60"></div>
-    <div class="field"><label for="ph1">R<sub>pH</sub>@pH 1 (kΩ)</label><input id="ph1" type="number" step="any" placeholder="e.g. 30"></div>
-    <div class="field"><label for="ph8">R<sub>pH</sub>@pH 8 (kΩ)</label><input id="ph8" type="number" step="any" placeholder="e.g. 250"></div>
+    <!-- Controls -->
+    <section class="panel toolbar" aria-label="Controls">
+      <div class="row">
+        <button id="btn" class="btn">Connect &amp; Start Logging</button>
+        <a id="dl" class="btn secondary" style="display:none;" aria-disabled="true">Download CSV</a>
+      </div>
+      <div class="row" role="group" aria-label="Calibration inputs">
+        <div class="field">
+          <label for="t25">R<sub>T</sub>@25 °C (Ω)</label>
+          <input id="t25" class="input" type="number" step="any" placeholder="e.g. 30" />
+        </div>
+        <div class="field">
+          <label for="t50">R<sub>T</sub>@50 °C (Ω)</label>
+          <input id="t50" class="input" type="number" step="any" placeholder="e.g. 60" />
+        </div>
+        <div class="field">
+          <label for="ph1">R<sub>pH</sub>@pH 1 (kΩ)</label>
+          <input id="ph1" class="input" type="number" step="any" placeholder="e.g. 30" />
+        </div>
+        <div class="field">
+          <label for="ph8">R<sub>pH</sub>@pH 8 (kΩ)</label>
+          <input id="ph8" class="input" type="number" step="any" placeholder="e.g. 250" />
+        </div>
+      </div>
+      <p class="hint">Enter all four calibration values to enable the button.</p>
+    </section>
+
+    <section id="content">
+      <!-- Table -->
+      <div class="panel table-card">
+        <div class="table-head">
+          <div class="subtitle" style="margin:0">Live Data</div>
+        </div>
+        <div class="table-wrap">
+          <table id="log">
+            <thead>
+              <tr>
+                <th class="sticky">#</th>
+                <th>Time (ms)</th>
+                <th>Raw Hex</th>
+                <th>S1 (mV)</th>
+                <th>S2 (mV)</th>
+                <th>R1 (kΩ)</th>
+                <th>R2 (Ω)</th>
+                <th>Temp (°C)</th>
+                <th>pH</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="panel charts">
+        <div class="chart-card">
+          <div class="chart-title">R1 (kΩ)</div>
+          <div class="chart-canvas"><canvas id="r1Chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">R2 (Ω)</div>
+          <div class="chart-canvas"><canvas id="r2Chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Temperature (°C)</div>
+          <div class="chart-canvas"><canvas id="tempChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">pH</div>
+          <div class="chart-canvas"><canvas id="phChart"></canvas></div>
+        </div>
+      </div>
+    </section>
   </div>
-
-  <div id="wrap">
-    <div class="table-wrap">
-      <table id="log">
-        <thead>
-          <tr>
-            <th>#</th><th>Time (ms)</th><th>Raw Hex</th><th>S1 (mV)</th><th>S2 (mV)</th><th>R1 (kΩ)</th><th>R2 (Ω)</th><th>Temp (°C)</th><th>pH</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-
-    <div id="charts">
-      <canvas id="r1Chart"></canvas>
-      <canvas id="r2Chart"></canvas>
-      <canvas id="tempChart"></canvas>
-      <canvas id="phChart"></canvas>
-    </div>
-  </div>
-</div>
 
 <script>
 /***** ---------- Config ---------- *****/
@@ -120,9 +216,7 @@ function validateInputs(){
   const filled=[inT25,inT50,inPH1,inPH8].every(el=>isFinite(parseFloat(el.value)));
   btn.disabled=!filled;
 }
-// attach listeners
 [inT25,inT50,inPH1,inPH8].forEach(el=>el.addEventListener('input',validateInputs));
-// initial check
 validateInputs();
 
 /***** ---------- Calibration Helpers ---------- *****/
@@ -136,17 +230,13 @@ function getCal(){
   if(isFinite(RT25) && isFinite(RT50) && RT25!==RT50){
     mT=(50-25)/(RT50-RT25);
     bT=25 - mT*RT25;
-  }else{
-    mT=NaN; bT=NaN;
-  }
+  }else{ mT=NaN; bT=NaN; }
 
   let mPH,bPH; // pH = mPH*R1 + bPH (R1 in kΩ)
   if(isFinite(RP1) && isFinite(RP8) && RP1!==RP8){
     mPH=(8-1)/(RP8-RP1);
     bPH=1 - mPH*RP1;
-  }else{
-    mPH=NaN; bPH=NaN;
-  }
+  }else{ mPH=NaN; bPH=NaN; }
   return {mT,bT,mPH,bPH};
 }
 
@@ -163,27 +253,43 @@ function r1ToPH(r1){
 
 /***** ---------- Charts ---------- *****/
 function initCharts(){
-  const common={type:'line',options:{responsive:true,maintainAspectRatio:false,animation:false,tension:.3,plugins:{legend:{display:false}},scales:{x:{title:{display:true,text:'t (s)',font:{size:28,weight:'600'}},ticks:{font:{size:20,weight:'500'},maxTicksLimit:12}},y:{beginAtZero:false,grid:{color:'#e0e3e7'}}}}};
+  const styles=getComputedStyle(document.documentElement);
+  const c1=styles.getPropertyValue('--series1').trim()||'#2563eb';
+  const c2=styles.getPropertyValue('--series2').trim()||'#ef4444';
+  const c3=styles.getPropertyValue('--series3').trim()||'#10b981';
+  const c4=styles.getPropertyValue('--series4').trim()||'#8b5cf6';
+
+  const common={
+    type:'line',
+    options:{
+      responsive:true,maintainAspectRatio:false,animation:false,tension:.3,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{title:{display:true,text:'t (s)'},grid:{display:false},ticks:{maxTicksLimit:10}},
+        y:{beginAtZero:false,grid:{color:'rgba(0,0,0,.06)'}}
+      }
+    }
+  };
 
   chartR1=new Chart(document.getElementById('r1Chart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:'#1e88e5',borderWidth:1.5,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:500,ticks:{font:{size:20,weight:'500'}},title:{display:true,text:'R1 (kΩ)',font:{size:28,weight:'600'}}}}}
+    data:{labels:[],datasets:[{data:[],borderColor:c1,borderWidth:2,pointRadius:0}]},
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:500}}}
   });
   chartR2=new Chart(document.getElementById('r2Chart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:'#e53935',borderWidth:1.5,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:100,ticks:{font:{size:20,weight:'500'}},title:{display:true,text:'R2 (Ω)',font:{size:28,weight:'600'}}}}}
+    data:{labels:[],datasets:[{data:[],borderColor:c2,borderWidth:2,pointRadius:0}]},
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:100}}}
   });
   chartTemp=new Chart(document.getElementById('tempChart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:'#43a047',borderWidth:1.5,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:10,max:60,ticks:{font:{size:20,weight:'500'}},title:{display:true,text:'Temp (°C)',font:{size:28,weight:'600'}}}}}
+    data:{labels:[],datasets:[{data:[],borderColor:c3,borderWidth:2,pointRadius:0}]},
+    options:{...common.options,scales:{...common.options.scales,y:{min:10,max:60}}}
   });
   chartPH=new Chart(document.getElementById('phChart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:'#8e24aa',borderWidth:1.5,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:14,ticks:{font:{size:20,weight:'500'}},title:{display:true,text:'pH',font:{size:28,weight:'600'}}}}}
+    data:{labels:[],datasets:[{data:[],borderColor:c4,borderWidth:2,pointRadius:0}]},
+    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:14}}}
   });
 }
 
@@ -211,8 +317,10 @@ btn.onclick=async()=>{
     nextT=startMs+PERIOD_MS;
     initCharts();
     readLoop();
-    btn.disabled>true; // keep disabled once logging starts
-  }catch(e){alert('BLE error: '+e);}  
+    btn.disabled = true; // keep disabled once logging starts
+  }catch(e){
+    alert('BLE connection error: '+e);
+  }
 };
 
 async function readLoop(){
@@ -244,7 +352,8 @@ function logSample(dataView){
   const tLabel=(t/1000).toFixed(2);
 
   // table row
-  addRow(++rowCount,t,rawHex,s1_mV,s2_mV,r1_disp,r2_disp,temp_disp,ph_disp);
+  addRow([rowCount+1,t,rawHex,s1_mV,s2_mV,r1_disp,r2_disp,temp_disp,ph_disp]);
+  rowCount++;
 
   // charts (raw R1/R2 always plotted; Temp/pH only if valid cal)
   pushData(chartR1,tLabel,r_s1_kOhm);
@@ -257,16 +366,25 @@ function logSample(dataView){
   if(rowCount%100===0)updateDownloadLink();
 }
 
-function addRow(...cells){
+function addRow(cells){
   const tr=document.createElement('tr');
-  cells.forEach(text=>{const td=document.createElement('td');td.textContent=text;td.className='num';tr.appendChild(td);});
+  const classes=['num','num','mono','num','num','num','num','num','num'];
+  cells.forEach((text,i)=>{
+    const td=document.createElement('td');
+    td.textContent=text;
+    if(i===0){td.classList.add('sticky','num');}
+    if(classes[i]) td.classList.add(classes[i]);
+    tr.appendChild(td);
+  });
   tbody.appendChild(tr);
 }
+
 function updateDownloadLink(){
   const blob=new Blob([csv],{type:'text/csv'});
   dl.href=URL.createObjectURL(blob);
   dl.download='ble_log.csv';
   dl.style.display='inline-block';
+  dl.removeAttribute('aria-disabled');
 }
 </script>
 </body>
