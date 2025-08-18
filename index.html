@@ -397,62 +397,59 @@ function r1ToPH(r1){
 /***** ---------- Charts ---------- *****/
 function initCharts(){
   const styles=getComputedStyle(document.documentElement);
-  const c1=styles.getPropertyValue('--series1').trim()||'#2563eb';
-  const c2=styles.getPropertyValue('--series2').trim()||'#ef4444';
-  const c3=styles.getPropertyValue('--series3').trim()||'#10b981';
-  const c4=styles.getPropertyValue('--series4').trim()||'#8b5cf6';
+  const c     = (styles.getPropertyValue('--series-line').trim() || styles.getPropertyValue('--accent').trim() || '#2563eb');
+  const w     = parseFloat(styles.getPropertyValue('--series-width')) || 2.25;
   const grid=styles.getPropertyValue('--grid').trim()||'rgba(0,0,0,.06)';
 
-  const common={
+  const common = {
     type:'line',
     options:{
-      responsive:true,maintainAspectRatio:false,animation:false,tension:.3,
-      plugins:{legend:{display:false}},
+      responsive:true, maintainAspectRatio:false, animation:false,
+      tension:.3,
+      plugins:{ legend:{ display:false } },
       scales:{
-        x:{title:{display:true,text:'t (s)'},grid:{display:false},ticks:{maxTicksLimit:10}},
-        y:{beginAtZero:false,grid:{color:grid}}
+        x:{ title:{ display:true, text:'t (s)' }, grid:{ display:false }, ticks:{ maxTicksLimit:10 } },
+        y:{ beginAtZero:false, grid:{ color:grid } }
       }
     }
   };
 
-  chartR1=new Chart(document.getElementById('r1Chart'),{
+  chartR1 = new Chart(document.getElementById('r1Chart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:c1,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:500,grid:{color:grid}}}}
+    data:{ labels:[], datasets:[{ data:[], borderColor:c, borderWidth:w, pointRadius:0, borderJoinStyle:'round', borderCapStyle:'round' }]},
+    options:{ ...common.options, scales:{ ...common.options.scales, y:{ min:0, max:500, grid:{ color:grid } } } }
   });
-  chartR2=new Chart(document.getElementById('r2Chart'),{
+  chartR2 = new Chart(document.getElementById('r2Chart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:c2,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:100,grid:{color:grid}}}}
+    data:{ labels:[], datasets:[{ data:[], borderColor:c, borderWidth:w, pointRadius:0, borderJoinStyle:'round', borderCapStyle:'round' }]},
+    options:{ ...common.options, scales:{ ...common.options.scales, y:{ min:0, max:100, grid:{ color:grid } } } }
   });
-  chartTemp=new Chart(document.getElementById('tempChart'),{
+  chartTemp = new Chart(document.getElementById('tempChart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:c3,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:10,max:60,grid:{color:grid}}}}
+    data:{ labels:[], datasets:[{ data:[], borderColor:c, borderWidth:w, pointRadius:0, borderJoinStyle:'round', borderCapStyle:'round' }]},
+    options:{ ...common.options, scales:{ ...common.options.scales, y:{ min:10, max:60, grid:{ color:grid } } } }
   });
-  chartPH=new Chart(document.getElementById('phChart'),{
+  chartPH = new Chart(document.getElementById('phChart'),{
     ...common,
-    data:{labels:[],datasets:[{data:[],borderColor:c4,borderWidth:2,pointRadius:0}]},
-    options:{...common.options,scales:{...common.options.scales,y:{min:0,max:14,grid:{color:grid}}}}
+    data:{ labels:[], datasets:[{ data:[], borderColor:c, borderWidth:w, pointRadius:0, borderJoinStyle:'round', borderCapStyle:'round' }]},
+    options:{ ...common.options, scales:{ ...common.options.scales, y:{ min:0, max:14, grid:{ color:grid } } } }
   });
 }
-
+	
 function updateChartColors(){
   if(!(window.chartR1||window.chartR2||window.chartTemp||window.chartPH)) return;
+	
   const styles=getComputedStyle(document.documentElement);
   const grid=styles.getPropertyValue('--grid').trim();
-  const c1=styles.getPropertyValue('--series1').trim();
-  const c2=styles.getPropertyValue('--series2').trim();
-  const c3=styles.getPropertyValue('--series3').trim();
-  const c4=styles.getPropertyValue('--series4').trim();
-  const charts=[chartR1,chartR2,chartTemp,chartPH];
-  const colors=[c1,c2,c3,c4];
-  charts.forEach((ch,i)=>{
+  const c      = styles.getPropertyValue('--series-line').trim();
+  const w      = parseFloat(styles.getPropertyValue('--series-width')) || 2.25;
+	
+  [chartR1, chartR2, chartTemp, chartPH].forEach(ch=>{
     if(!ch) return;
-    ch.data.datasets[0].borderColor = colors[i];
-    if(ch.options && ch.options.scales && ch.options.scales.y){
-      ch.options.scales.y.grid.color = grid;
-    }
+    const ds = ch.data.datasets[0];
+    ds.borderColor = c;
+    ds.borderWidth = w;
+    if(ch.options?.scales?.y){ ch.options.scales.y.grid.color = grid; }
     ch.update('none');
   });
 }
@@ -566,4 +563,5 @@ function updateDownloadLink(){
 </script>
 </body>
 </html>
+
 
