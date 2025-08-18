@@ -21,10 +21,9 @@
       --border:#e5e7eb; /* gray-200 */
       --shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.06);
       --radius:12px;
-      --series1:#2563eb; /* R1 */
-      --series2:#ef4444; /* R2 */
-      --series3:#10b981; /* Temp */
-      --series4:#8b5cf6; /* pH */
+      /* …你原有的变量… */
+	  --series-line: #0f4c81;       /* 统一曲线颜色（亮） */
+	  --series-width: 2.25;         /* 统一线宽（px，可用小数） */
       --grid: rgba(0,0,0,.06);
       --hover-row: rgba(0,0,0,.03);
     }
@@ -38,9 +37,10 @@
       --accent-weak:rgba(96,165,250,.12);
       --border:#1f2937;
       --shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 35px rgba(0,0,0,.6);
-      --series1:#60a5fa; --series2:#f87171; --series3:#34d399; --series4:#a78bfa;
       --grid: rgba(255,255,255,.08);
       --hover-row: rgba(255,255,255,.03);
+	  --series-line: #9bc2ff;       /* 统一曲线颜色（暗） */
+  	  --series-width: 2.25;
     }
     /* 若未手动选择，则默认跟随系统 */
     @media (prefers-color-scheme: dark){
@@ -53,7 +53,8 @@
         --accent-weak:rgba(96,165,250,.12);
         --border:#1f2937;
         --shadow:0 0 0 1px rgba(255,255,255,.03), 0 10px 35px rgba(0,0,0,.6);
-        --series1:#60a5fa; --series2:#f87171; --series3:#34d399; --series4:#a78bfa;
+        --series-line: #9bc2ff;
+    	--series-width: 2.25;
         --grid: rgba(255,255,255,.08);
         --hover-row: rgba(255,255,255,.03);
       }
@@ -565,3 +566,4 @@ function updateDownloadLink(){
 </script>
 </body>
 </html>
+
